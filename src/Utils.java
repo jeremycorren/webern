@@ -1,18 +1,15 @@
-import javafx.geometry.Orientation;
-import javafx.scene.Scene;
-import javafx.scene.control.ScrollBar;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.VBox;
 
 import java.util.concurrent.ThreadLocalRandom;
 
 final class Utils {
-    static int generate(Timbre timbre) {
-        return ThreadLocalRandom.current().nextInt(timbre.getOrigin(), timbre.getBound());
-    }
-
-    static int generate(int min, int max) {
-        return ThreadLocalRandom.current().nextInt(min, max);
+    static Alert buildAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Invalid Input");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        return alert;
     }
 
     static Slider buildSlider(int min, int max, int value, int tickUnit) {
@@ -25,5 +22,26 @@ final class Utils {
         slider.setMinorTickCount(3);
         slider.setMajorTickUnit(tickUnit);
         return slider;
+    }
+
+    static int generate(Timbre timbre) {
+        return ThreadLocalRandom.current().nextInt(timbre.getOrigin(), timbre.getBound());
+    }
+
+    static int generate(int min, int max) {
+        return ThreadLocalRandom.current().nextInt(min, max);
+    }
+
+    static int validate(String input) {
+        Integer validInput = null;
+        try {
+            validInput = Integer.parseInt(input);
+            if (validInput < 1) {
+                return -1;
+            }
+        } catch (NumberFormatException e) {
+            return -2;
+        }
+        return validInput;
     }
 }
