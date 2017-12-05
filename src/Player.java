@@ -3,10 +3,12 @@ import java.util.stream.IntStream;
 public class Player implements Runnable {
     private int EVENTS;
     private Timbre TIMBRE;
+    private PitchSpace PITCH_SPACE;
 
-    Player(int events, Timbre timbre) {
-        EVENTS = events;
+    Player(Timbre timbre, PitchSpace pitchSpace) {
+        EVENTS = 10000;
         TIMBRE = timbre;
+        PITCH_SPACE = pitchSpace;
     }
 
     @Override
@@ -22,12 +24,16 @@ public class Player implements Runnable {
             int MIN_PITCH = calculateMinDuration(Parameter.PITCH);
             int MAX_PITCH = calculateMaxDuration(Parameter.PITCH);
 
-            midi.play(
-                    Utils.generate(MIN_PITCH, MAX_PITCH),
-                    Utils.generate(TIMBRE),
-                    Utils.generate(MIN_DURATION, MAX_DURATION),
-                    Utils.generate(MIN_VOLUME, MAX_VOLUME)
-            );
+            try {
+                midi.play(
+                        Utils.generate(MIN_PITCH, MAX_PITCH, PITCH_SPACE),
+                        Utils.generate(TIMBRE),
+                        Utils.generate(MIN_DURATION, MAX_DURATION),
+                        Utils.generate(MIN_VOLUME, MAX_VOLUME)
+                );
+            } catch (InterruptedException e) {
+                return;
+            }
         }
         midi.breakdown();
     }
@@ -35,7 +41,7 @@ public class Player implements Runnable {
     private int calculateMinDuration(Parameter param) {
         switch (param) {
             case VOLUME:
-                return Main.getVolumeValue() / 2;
+                return Main.getVolumeValue() - 10;
             case DURATION:
                 return Main.getDurationValue() / 2;
             case PITCH:
@@ -48,7 +54,7 @@ public class Player implements Runnable {
     private int calculateMaxDuration(Parameter param) {
         switch (param) {
             case VOLUME:
-                return Double.valueOf(Main.getVolumeValue() * 1.5).intValue();
+                return Main.getVolumeValue() + 10;
             case DURATION:
                 return Double.valueOf(Main.getDurationValue() * 1.5).intValue();
             case PITCH:

@@ -1,9 +1,21 @@
 import javafx.scene.control.Alert;
 import javafx.scene.control.Slider;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 final class Utils {
+    final static Integer OCTAVE;
+    final static List<Integer> PITCH_CLASSES;
+    static {
+        OCTAVE = Integer.valueOf(12);
+        PITCH_CLASSES = Arrays.asList(0, 2, 4, 5, 7, 9, 11);
+    }
+
+    /*
+     * UI element methods
+     */
     static Alert buildAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Invalid Input");
@@ -17,11 +29,23 @@ final class Utils {
         slider.setMin(min);
         slider.setMax(max);
         slider.setValue(value);
-        slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);
         slider.setMinorTickCount(3);
         slider.setMajorTickUnit(tickUnit);
         return slider;
+    }
+
+    /*
+     * MIDI methods
+     */
+    static List<Integer> buildPitchSpace(int offset) {
+        List<Integer> pitchSpace = new java.util.ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            for (int pitchClass : PITCH_CLASSES) {
+                pitchSpace.add((pitchClass + offset) + (i * OCTAVE));
+            }
+        }
+        return pitchSpace;
     }
 
     static int generate(Timbre timbre) {
@@ -32,16 +56,15 @@ final class Utils {
         return ThreadLocalRandom.current().nextInt(min, max);
     }
 
-    static int validate(String input) {
-        Integer validInput = null;
-        try {
-            validInput = Integer.parseInt(input);
-            if (validInput < 1) {
-                return -1;
+    public static int generate(int min, int max, PitchSpace pitchSpace) {
+        if (pitchSpace != null) {
+            int pitch = ThreadLocalRandom.current().nextInt(min, max);
+            if (pitchSpace.asList().contains(pitch)) {
+                return pitch;
+            } else {
+                return generate(min, max, pitchSpace); // watch out for recursion
             }
-        } catch (NumberFormatException e) {
-            return -2;
         }
-        return validInput;
+        return generate(min, max);
     }
 }

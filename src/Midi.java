@@ -17,14 +17,16 @@ class Midi {
         }
     }
 
-    void play(int noteNumber, int timbre, int duration, int velocity) {
+    void play(int noteNumber, int timbre, int duration, int velocity) throws InterruptedException {
         channel.programChange(timbre);
         channel.noteOn(noteNumber, velocity);
         try {
             Thread.sleep(duration);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            channel.noteOff(noteNumber);
+            throw new InterruptedException();
         }
+
         channel.noteOff(noteNumber);
     }
 
