@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -58,21 +59,15 @@ public class Main extends Application {
         playButtonContainer.setAlignment(Pos.CENTER);
 
         volumeSlider = Utils.buildSlider(0, 120, 60, 20);
-        volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            volumeValue = (int) volumeSlider.getValue();
-        });
+        volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeValue = (int) volumeSlider.getValue());
         volumeValue = (int) volumeSlider.getValue();
 
         durationSlider = Utils.buildSlider(100, 4100, 2100, 1000);
-        durationSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            durationValue = (int) durationSlider.getValue();
-        });
+        durationSlider.valueProperty().addListener((observable, oldValue, newValue) -> durationValue = (int) durationSlider.getValue());
         durationValue = (int) durationSlider.getValue();
 
         registerSlider = Utils.buildSlider(40, 80, 60, 20);
-        registerSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            registerValue = (int) registerSlider.getValue();
-        });
+        registerSlider.valueProperty().addListener((observable, oldValue, newValue) -> registerValue = (int) registerSlider.getValue());
         registerValue = (int) registerSlider.getValue();
 
         timbreDropdowns = new ArrayList<>();
@@ -156,20 +151,26 @@ public class Main extends Application {
 
             boolean timbreNotSelected = false;
             for (ComboBox<String> timbreDropdown : timbreDropdowns) {
-                timbreNotSelected = Timbre.getTimbre(timbreDropdown.getSelectionModel().getSelectedItem()) == null;
+                if (timbreNotSelected = Timbre.getTimbre(timbreDropdown.getSelectionModel().getSelectedItem()) == null) {
+                    break;
+                }
             }
 
             Boolean pitchSpaceNotSelected = null;
-            for (ComboBox<String> pitchSpaceDropdown : pitchSpaceDropdowns) {
-                pitchSpaceNotSelected = PitchSpace.getPitchSpace(pitchSpaceDropdown.getSelectionModel().getSelectedItem()) == null;
+            if (!pitchSpaceDropdowns.isEmpty()) {
+                for (ComboBox<String> pitchSpaceDropdown : pitchSpaceDropdowns) {
+                    if (pitchSpaceNotSelected = PitchSpace.getPitchSpace(pitchSpaceDropdown.getSelectionModel().getSelectedItem()) == null) {
+                        break;
+                    }
+                }
             }
 
-            if (timbreNotSelected && pitchSpaceNotSelected == null) {
-                Alert alert = Utils.buildAlert("A timbre was left unspecified.");
+            if (timbreNotSelected || (pitchSpaceNotSelected !=null && pitchSpaceNotSelected)) {
+                Alert alert = Utils.buildAlert();
                 alert.showAndWait();
-            } else if (timbreNotSelected && pitchSpaceNotSelected) {
-                Alert alert = Utils.buildAlert("Some timbre(s) and pitch space(s) were left unspecified.");
-                alert.showAndWait();
+
+                playButton.setDisable(false);
+                stopButton.setDisable(true);
             } else {
                 executor = Executors.newFixedThreadPool(numThreads);
                 if (pitchSpaceCheckbox.isSelected()) {
@@ -193,11 +194,12 @@ public class Main extends Application {
                     }
                 }
             }
-            playButton.setDisable(false);
         });
 
         primaryStage.setScene(new Scene(layout, 450, 600));
         primaryStage.show();
+
+        primaryStage.setOnHiding((WindowEvent event) -> playerShutdown());
     }
 
     static int getVolumeValue() {
@@ -220,6 +222,7 @@ public class Main extends Application {
             } catch (InterruptedException e) {
                 System.out.println("Threads still terminating");
             }
+            playButton.setDisable(false);
         }
     }
 }

@@ -6,21 +6,21 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 final class Utils {
-    final static Integer OCTAVE;
-    final static List<Integer> PITCH_CLASSES;
+    private final static Integer OCTAVE;
+    private final static List<Integer> PITCH_CLASSES;
     static {
-        OCTAVE = Integer.valueOf(12);
+        OCTAVE = 12;
         PITCH_CLASSES = Arrays.asList(0, 2, 4, 5, 7, 9, 11);
     }
 
     /*
      * UI element methods
      */
-    static Alert buildAlert(String message) {
+    static Alert buildAlert() {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Invalid Input");
         alert.setHeaderText(null);
-        alert.setContentText(message);
+        alert.setContentText("An Instrument and/or Pitch space field was left empty.");
         return alert;
     }
 
@@ -56,13 +56,13 @@ final class Utils {
         return ThreadLocalRandom.current().nextInt(min, max);
     }
 
-    public static int generate(int min, int max, PitchSpace pitchSpace) {
+    static int generate(int min, int max, PitchSpace pitchSpace) {
         if (pitchSpace != null) {
             int pitch = ThreadLocalRandom.current().nextInt(min, max);
             if (pitchSpace.asList().contains(pitch)) {
                 return pitch;
             } else {
-                return generate(min, max, pitchSpace); // watch out for recursion
+                return generate(min, max, pitchSpace);
             }
         }
         return generate(min, max);
