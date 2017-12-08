@@ -1,4 +1,4 @@
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,7 +9,7 @@ public enum Timbre {
     CHOIR(52, 54)
     ;
 
-    static Map<String, Timbre> timbreNames = new HashMap<>();
+    static Map<String, Timbre> timbreNames = new LinkedHashMap<>();
     static {
         for (Timbre timbre : Timbre.values()) {
             timbreNames.put(timbre.toString(), timbre);

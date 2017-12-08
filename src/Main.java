@@ -5,10 +5,13 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -24,8 +27,10 @@ public class Main extends Application {
     private VBox layout;
     private ComboBox<Integer> numThreadsDropdown;
     private CheckBox pitchSpaceCheckbox;
-    private Button selectInstrumentsButton, playButton, stopButton, restartButton;
-    private HBox playButtonContainer;
+    private Button selectInstrumentsButton;
+    private Button homogenizeTimbresButton, homogenizePitchButton;
+    private Button playButton, stopButton, restartButton;
+    private HBox homogenizeButtonContainer, playButtonContainer;
     private Slider volumeSlider, durationSlider, registerSlider;
     private List<ComboBox<String>> timbreDropdowns;
     private List<ComboBox<String>> pitchSpaceDropdowns;
@@ -46,12 +51,16 @@ public class Main extends Application {
 
         pitchSpaceCheckbox = new CheckBox("Determine pitch spaces");
 
-        selectInstrumentsButton = new Button("Select instrumental timbres");
+        selectInstrumentsButton = new Button("Create ensemble");
+
+        homogenizeTimbresButton = Utils.buildButton("Homogenize", 140);
+        homogenizePitchButton = Utils.buildButton("Homogenize", 140);
+
+        homogenizeButtonContainer = new HBox(10);
+        homogenizeButtonContainer.getChildren().addAll(homogenizeTimbresButton, homogenizePitchButton);
+
         playButton = new Button("Play");
-
         stopButton = new Button("Stop");
-        stopButton.setDisable(true);
-
         restartButton = new Button("Restart");
 
         playButtonContainer = new HBox(10);
@@ -76,7 +85,7 @@ public class Main extends Application {
         pitchSpaceDropdowns = new ArrayList<>();
         pitchSpaceNames = FXCollections.observableArrayList(PitchSpace.getPitchSpaceNames());
     }
-    
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -92,38 +101,38 @@ public class Main extends Application {
                 selectInstrumentsButton
         );
 
-        stopButton.setOnAction((ActionEvent event) -> {
-            playerShutdown();
-            stopButton.setDisable(true);
-            playButton.setDisable(false);
-        });
-
-        restartButton.setOnAction((ActionEvent event) -> {
-            playerShutdown();
-            primaryStage.close();
-            Platform.runLater(() -> {
-                try {
-                    new Main().start(new Stage());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        });
-
         selectInstrumentsButton.setOnAction((ActionEvent event) -> {
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
             numThreads = numThreadsDropdown.getValue();
+            switch (numThreads) {
+                case 1:
+                    stage.setHeight(460);
+                    break;
+                case 2:
+                    stage.setHeight(520);
+                    break;
+                case 3:
+                    stage.setHeight(560);
+                case 4:
+                    stage.setHeight(600);
+            }
+
+            if (numThreads > 1) {
+                layout.getChildren().add(homogenizeButtonContainer);
+            }
 
             selectInstrumentsButton.setDisable(true);
             pitchSpaceCheckbox.setDisable(true);
 
             for (int i : IntStream.range(0, numThreads).toArray()) {
-                ComboBox<String> timbreOption = new ComboBox<>(timbreNames);
+                ComboBox<String> timbreOption = Utils.buildDropdown(timbreNames, 140);
                 timbreOption.setPromptText("Instrument " + (i + 1));
                 timbreDropdowns.add(timbreOption);
 
                 ComboBox<String> pitchSpaceOption = null;
                 if (pitchSpaceCheckbox.isSelected()) {
-                    pitchSpaceOption = new ComboBox<>(pitchSpaceNames);
+                    pitchSpaceOption = Utils.buildDropdown(pitchSpaceNames, 140);
                     pitchSpaceOption.setPromptText("Pitch Space " + (i + 1));
                     pitchSpaceDropdowns.add(pitchSpaceOption);
                 }
@@ -134,6 +143,7 @@ public class Main extends Application {
                 }
             }
 
+            stopButton.setDisable(true);
             layout.getChildren().addAll(
                     playButtonContainer,
                     new Label("Volume"),
@@ -145,9 +155,46 @@ public class Main extends Application {
             );
         });
 
+        homogenizeTimbresButton.setOnAction((ActionEvent event) -> {
+            ComboBox<String> timbreDropdown = timbreDropdowns.get(0);
+            if (timbreDropdown != null) {
+                Timbre timbre = Timbre.getTimbre(timbreDropdown.getSelectionModel().getSelectedItem());
+
+                if (timbre != null) {
+                    for (ComboBox<String> dropdown : timbreDropdowns) {
+                        dropdown.getSelectionModel().select(timbre.toString());
+                    }
+                } else {
+                    Alert alert = Utils.buildAlert("Set field Instrument 1.");
+                    alert.showAndWait();
+                }
+            }
+        });
+
+        homogenizePitchButton.setOnAction((ActionEvent event) -> {
+            if (!pitchSpaceDropdowns.isEmpty()) {
+                ComboBox<String> pitchSpaceDropdown = pitchSpaceDropdowns.get(0);
+                if (pitchSpaceDropdown != null) {
+                    PitchSpace pitchSpace = PitchSpace.getPitchSpace(pitchSpaceDropdown.getSelectionModel().getSelectedItem());
+
+                    if (pitchSpace != null) {
+                        for (ComboBox<String> dropdown : pitchSpaceDropdowns) {
+                            dropdown.getSelectionModel().select(pitchSpace.toString());
+                        }
+                    } else {
+                        Alert alert = Utils.buildAlert("Set field Pitch Space 1.");
+                        alert.showAndWait();
+                    }
+
+                }
+            }
+        });
+
         playButton.setOnAction((ActionEvent event) -> {
             playButton.setDisable(true);
             stopButton.setDisable(false);
+            homogenizePitchButton.setDisable(true);
+            homogenizeTimbresButton.setDisable(true);
 
             boolean timbreNotSelected = false;
             for (ComboBox<String> timbreDropdown : timbreDropdowns) {
@@ -166,11 +213,13 @@ public class Main extends Application {
             }
 
             if (timbreNotSelected || (pitchSpaceNotSelected !=null && pitchSpaceNotSelected)) {
-                Alert alert = Utils.buildAlert();
+                Alert alert = Utils.buildAlert("Set all ensemble fields.");
                 alert.showAndWait();
 
                 playButton.setDisable(false);
                 stopButton.setDisable(true);
+                homogenizePitchButton.setDisable(false);
+                homogenizeTimbresButton.setDisable(false);
             } else {
                 executor = Executors.newFixedThreadPool(numThreads);
                 if (pitchSpaceCheckbox.isSelected()) {
@@ -196,10 +245,31 @@ public class Main extends Application {
             }
         });
 
-        primaryStage.setScene(new Scene(layout, 450, 600));
-        primaryStage.show();
+        stopButton.setOnAction((ActionEvent event) -> {
+            playerShutdown();
+            stopButton.setDisable(true);
+            playButton.setDisable(false);
+            homogenizePitchButton.setDisable(false);
+            homogenizeTimbresButton.setDisable(false);
+        });
 
+        restartButton.setOnAction((ActionEvent event) -> {
+            playerShutdown();
+            primaryStage.close();
+            Platform.runLater(() -> {
+                try {
+                    new Main().start(new Stage());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
         primaryStage.setOnHiding((WindowEvent event) -> playerShutdown());
+
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+        primaryStage.setX(screenBounds.getMinX() + 400);
+        primaryStage.setScene(new Scene(layout, 450, 170));
+        primaryStage.show();
     }
 
     static int getVolumeValue() {

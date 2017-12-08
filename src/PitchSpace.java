@@ -1,4 +1,4 @@
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +18,7 @@ public enum PitchSpace {
     B(Utils.buildPitchSpace(11))
     ;
 
-    static Map<String, PitchSpace> pitchSpaceNames = new HashMap<>();
+    static Map<String, PitchSpace> pitchSpaceNames = new LinkedHashMap<>();
     static {
         for (PitchSpace pitchSpace : PitchSpace.values()) {
             pitchSpaceNames.put(pitchSpace.toString(), pitchSpace);

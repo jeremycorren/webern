@@ -1,4 +1,7 @@
+import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
 
 import java.util.Arrays;
@@ -16,12 +19,26 @@ final class Utils {
     /*
      * UI element methods
      */
-    static Alert buildAlert() {
+    static Alert buildAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Invalid Input");
         alert.setHeaderText(null);
-        alert.setContentText("An Instrument and/or Pitch space field was left empty.");
+        alert.setContentText(message);
         return alert;
+    }
+
+    static Button buildButton(String message, int width) {
+        Button button = new Button(message);
+        button.setMinWidth(width);
+        button.setPrefWidth(button.getMinWidth());
+        return button;
+    }
+
+    static ComboBox<String> buildDropdown(ObservableList<String> options, int width) {
+        ComboBox<String> dropdown = new ComboBox<>(options);
+        dropdown.setMinWidth(width);
+        dropdown.setPrefWidth(dropdown.getMinWidth());
+        return dropdown;
     }
 
     static Slider buildSlider(int min, int max, int value, int tickUnit) {
